@@ -1,7 +1,6 @@
 import Fastify from 'fastify'
 import crawl from './crawl.mjs'
 
-
 const fastify = Fastify({
     logger: true
 })
@@ -10,7 +9,7 @@ const fastify = Fastify({
 fastify.post('/api/screenshoot', async function handler(request, reply) {
     const { url } = request.body
     const buffer = await crawl({ url })
-    
+
     // 在发送非常规数据时。一定一定要指定响应数据类型
     reply.type("image/jpeg")
     return buffer

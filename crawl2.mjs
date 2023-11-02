@@ -1,13 +1,14 @@
 import xCrawl from 'x-crawl'
 
-// const args = process.argv;
+const args = process.argv;
 
 const myXCrawl = xCrawl()
 
-export default async function (params) {
-    const { url } = params
+async function Test() {
     const res = await myXCrawl.crawlPage({
-        url,
+        targets: [
+            args[2]
+        ],
         maxRetry: 10,
         viewport: { width: 1920, height: 1080 },
         // 为此次的目标统一设置指纹
@@ -43,14 +44,26 @@ export default async function (params) {
         ]
     })
 
-    const { browser, page } = res.data
-    // // Get a screenshot of the rendered page
-    const buffer = await page.screenshot({ path: `./uploads/${Date.now()}.png` })
+    // 通过遍历爬取页面结果获取图片 URL
+    const imgUrls = []
+    for (const item of res) {
+        const { id } = item
+        const { page } = item.data
+        const elSelector = id === 1 ? '.sd_list__32LAL' : '.c4mnd7m' //sd_list__32LAL
 
-    console.log('Screen capture is complete')
+        // 等待页面元素出现
+        await page.waitForSelector(elSelector)
 
-    // close brower
-    browser.close()
+        //获取页面图片的 URL
+        const urls = await page.$$eval(`${elSelector} img`, (imgEls) => imgEls.map((item) => item.src))
 
-    return buffer
+        imgUrls.push(...urls)
+
+        // 关闭页面
+        page.close()
+    }
+
+    // 调用 crawlFile API 爬取图片
+    await myXCrawl.crawlFile({ targets: imgUrls, storeDirs: './upload' })
 }
+Test()
